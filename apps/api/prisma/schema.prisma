@@ -12,3 +12,41 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Client {
+  id String @id @default(uuid())
+
+  numberClient String  @unique
+  name         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Bill Bill[]
+}
+
+model Bill {
+  id String @id @default(uuid())
+
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String
+
+  referenceMonth DateTime
+  billMonth      String
+
+  pdfPath String
+
+  energyConsumptionKwh   Decimal
+  energyConsumptionValue Decimal
+
+  sceeEnergyKWh   Decimal
+  sceeEnergyValue Decimal
+
+  compensatedEnergyKWh   Decimal
+  compensatedEnergyValue Decimal
+
+  publicLightingValue Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
