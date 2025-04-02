@@ -22,7 +22,7 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Bill Bill[]
+  Bills Bill[]
 }
 
 model Bill {
