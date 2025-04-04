@@ -31,6 +31,8 @@ model Bill {
   client   Client @relation(fields: [clientId], references: [id])
   clientId String
 
+  clientNumber String
+
   referenceMonth DateTime
   billMonth      String
 
