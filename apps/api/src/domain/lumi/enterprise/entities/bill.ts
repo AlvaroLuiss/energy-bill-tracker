@@ -1,9 +1,11 @@
-import { Entity } from "apps/api/src/core/entities/entity";
 import { UniqueEntityID } from "apps/api/src/core/entities/unique-entity-id";
 import { Optional } from "apps/api/src/core/types/optional";
+import { Entity } from '../../../../core/entities/entity';
 
-interface BillProps {
-  clientId: string;
+export interface BillProps {
+  clientId: UniqueEntityID;
+
+  clientNumber: string;
 
   referenceMonth: Date;
   billMonth: string;
@@ -28,6 +30,10 @@ export class Bill extends Entity<BillProps> {
 
   get clientId() {
     return this.props.clientId;
+  }
+
+  get clientNumber() {
+    return this.props.clientNumber;
   }
 
   get referenceMonth() {
@@ -88,25 +94,13 @@ export class Bill extends Entity<BillProps> {
     id?: UniqueEntityID,
   ): Bill {
     const bill = new Bill({
-      clientId: props.clientId,
-      referenceMonth: props.referenceMonth,
-      billMonth: props.billMonth,
-      pdfPath: props.pdfPath,
-      energyConsumptionKwh: props.energyConsumptionKwh,
-      energyConsumptionValue: props.energyConsumptionValue,
-      sceeEnergyKWh: props.sceeEnergyKWh,
-      sceeEnergyValue: props.sceeEnergyValue,
-      compensatedEnergyKWh: props.compensatedEnergyKWh,
-      compensatedEnergyValue: props.compensatedEnergyValue,
-      publicLightingValue: props.publicLightingValue,
+      ...props,
       createdAt: props.createdAt ?? new Date(),
       updatedAt: props.updatedAt ?? new Date(),
     }, 
-    id
+    id,
   );
 
     return bill;
   }
-
-
 }
