@@ -1,5 +1,5 @@
-import { BillRepository } from "apps/api/src/domain/lumi/application/repositories/bill.repository";
-import { Bill } from "apps/api/src/domain/lumi/enterprise/entities/bill";
+import { BillRepository } from '@/domain/lumi/application/repositories/bill.repository';
+import { Bill } from "@/domain/lumi/enterprise/entities/bill";
 
 export class InMemoryBillRepository implements BillRepository {
   public items: Bill[] = [];
