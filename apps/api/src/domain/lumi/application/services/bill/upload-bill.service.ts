@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs/promises';
 import { Either, left, right } from '../../../../../core/either';
 import { InvalidFieldError } from '../../../../../core/errors/invalid-field-error';
 import { ResourceNotFoundError } from '../../../../../core/errors/resource-not-found-error';
@@ -10,7 +9,7 @@ import { BillRepository } from '../../repositories/bill.repository';
 import { ClientRepository } from '../../repositories/client.repository';
 
 interface UploadBillServiceRequest {
-  filePath: string;
+  fileBuffer: Buffer;
 }
 
 type UploadBillServiceResponse = Either<
@@ -26,15 +25,10 @@ export class UploadBillService {
   ) {}
 
   async execute({
-    filePath,
+    fileBuffer,
   }: UploadBillServiceRequest): Promise<UploadBillServiceResponse> {
-    if (!filePath || !filePath.endsWith('.pdf')) {
+    if (!fileBuffer || fileBuffer.length === 0) {
       return left(new InvalidFieldError());
-    }
-
-    const fileBuffer = await this.readFile(filePath);
-    if (!fileBuffer) {
-      return left(new ResourceNotFoundError());
     }
 
     const extractedData = await this.extractTextFromPdf(fileBuffer);
@@ -42,13 +36,12 @@ export class UploadBillService {
       return left(new ResourceNotFoundError());
     }
 
-
     let client = await this.clientRepository.findByClientNumber(extractedData.clientNumber);
     if (!client) {
       client = Client.create({
         numberClient: extractedData.clientNumber,
-        name: `Cliente ${extractedData.clientName}`,
-        email: `${extractedData.clientName}@example.com`, 
+        name: `${extractedData.clientName}`,
+        email: `${extractedData.clientName.replace(/\s+/g, '')}@example.com`,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -60,7 +53,7 @@ export class UploadBillService {
       clientNumber: extractedData.clientNumber, 
       referenceMonth: new Date(extractedData.referenceMonth),
       billMonth: extractedData.referenceMonth,
-      pdfPath: filePath,
+      pdfPath: '', 
       energyConsumptionKwh: extractedData.energyElectric.quantity,
       energyConsumptionValue: extractedData.energyElectric.value,
       sceeEnergyKWh: extractedData.energySCEEE.quantity,
@@ -73,17 +66,6 @@ export class UploadBillService {
     await this.billRepository.create(bill);
 
     return right(extractedData);
-  }
-
-  private async readFile(filePath: string): Promise<Buffer | null> {
-    try {
-      return await fs.readFile(filePath);
-    } catch (err) {
-      if (err.code !== 'ENOENT') {
-        console.error('Error reading file:', err); 
-      }
-      return null;
-    }
   }
 
   private async extractTextFromPdf(fileBuffer: Buffer): Promise<ExtractedInvoiceData | null> {

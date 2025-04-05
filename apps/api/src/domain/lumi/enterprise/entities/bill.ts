@@ -1,6 +1,7 @@
-import { UniqueEntityID } from "apps/api/src/core/entities/unique-entity-id";
-import { Optional } from "apps/api/src/core/types/optional";
-import { Entity } from '../../../../core/entities/entity';
+import { Entity } from "../../../../core/entities/entity";
+import { UniqueEntityID } from "../../../../core/entities/unique-entity-id";
+import { Optional } from "../../../../core/types/optional";
+
 
 export interface BillProps {
   clientId: UniqueEntityID;

@@ -1,5 +1,8 @@
 import { faker } from '@faker-js/faker'
 
+import { PrismaBillMapper } from '@/infra/database/prisma/mappers/prisma-bill-mapper'
+import { PrismaService } from '@/infra/database/prisma/prisma.service'
+import { Injectable } from '@nestjs/common'
 import { UniqueEntityID } from '../../../api/src/core/entities/unique-entity-id'
 import { Bill, BillProps } from '../../src/domain/lumi/enterprise/entities/bill'
 
@@ -27,4 +30,17 @@ export function makeBill(
     id,  
   )
   return bill
+}
+
+@Injectable()
+export class BillFactory {
+  constructor(private prismaService: PrismaService) {}
+
+  async makePrismaBill(override: Partial<BillProps> = {}): Promise<Bill> {
+    const bill = makeBill(override)
+    await this.prismaService.bill.create({
+      data: PrismaBillMapper.toPrisma(bill),
+    })
+    return bill
+  }
 }
