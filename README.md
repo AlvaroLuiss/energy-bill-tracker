@@ -34,19 +34,25 @@ Antes de começar, certifique-se de ter instalado em sua máquina:
 
 2. Instale as dependências:
    ```
+   cd apps/api
    npm install
    ```
 
-3. Configure as variáveis de ambiente:
+   '''
+   cd apps/dashboard
+   npm install
+   '''
+
+4. Configure as variáveis de ambiente:
    - Copie o arquivo `.env.example` para `.env` em ambas as pastas `apps/api` e `apps/dashboard`.
    - Preencha as variáveis de ambiente necessárias em cada arquivo `.env`.
 
-4. Inicie o banco de dados PostgreSQL usando Docker:
+5. Inicie o banco de dados PostgreSQL usando Docker:
    ```
-   docker-compose up -d
+   docker compose up -d
    ```
 
-5. Execute as migrações do banco de dados:
+6. Execute as migrações do banco de dados:
    ```
    cd apps/api
    npx prisma migrate dev
