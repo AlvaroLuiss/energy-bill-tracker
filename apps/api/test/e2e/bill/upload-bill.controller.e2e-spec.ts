@@ -27,7 +27,6 @@ describe('Upload Bill (E2E)', () => {
 
   test('[POST] /bills/upload', async () => {
     const filePath = path.resolve(__dirname, '../fixtures/example.pdf'); 
-    console.log('File path:', filePath);
 
     if (!fs.existsSync(filePath)) {
       throw new Error(`File not found at path: ${filePath}`);
@@ -37,14 +36,6 @@ describe('Upload Bill (E2E)', () => {
       .post('/bills/upload')
       .attach('file', filePath);
 
-    console.log('Response body:', response.body); // Adicione este log para depuração
     expect(response.status).toBe(201);
-
-    // expect(response.body).toEqual({      
-    //   bill: expect.objectContaining({
-    //     id: expect.any(String),        
-    //     fileName: 'example.pdf',
-    //   }),    
-    // });
   });
 });
