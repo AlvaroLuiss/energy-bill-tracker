@@ -3,11 +3,13 @@ import { UniqueEntityID } from "../../../../core/entities/unique-entity-id";
 import { Optional } from "../../../../core/types/optional";
 
 
-interface ClientProps {
+export interface ClientProps {
   name: string;
   email: string;
 
   numberClient: string;
+
+  bills?: string[];
 
   createdAt?: Date;
   updatedAt?: Date;
@@ -27,6 +29,10 @@ export class Client extends Entity<ClientProps> {
     return this.props.numberClient;
   }
 
+  get bills(): string[] | undefined {
+    return this.props.bills;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }
@@ -44,7 +50,7 @@ export class Client extends Entity<ClientProps> {
   }
 
   static create(
-    props: Optional<ClientProps, 'createdAt' | 'updatedAt'>,
+    props: Optional<ClientProps, 'createdAt' | 'updatedAt' | 'bills'>,
     id?: UniqueEntityID,
   ): Client {
     const client = new Client(

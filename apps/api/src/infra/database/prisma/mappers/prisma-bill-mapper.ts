@@ -26,7 +26,8 @@ export class HttpBill extends createZodDto(billHttpSchema) {}
 
 export class PrismaBillMapper { 
    static toDomain(raw: PrismaBill): Bill {
-    return Bill.create(      {
+    return Bill.create(      
+      {
         clientId: new UniqueEntityID(raw.clientId),
         clientNumber: raw.clientNumber,
         referenceMonth: raw.referenceMonth,
@@ -78,12 +79,13 @@ export class PrismaBillMapper {
       energyConsumptionValue: bill.energyConsumptionValue,
       sceeEnergyKWh: bill.sceeEnergyKWh,
       sceeEnergyValue: bill.sceeEnergyValue,
-      compensatedEnergyKWh: bill.compensatedEnergyKWh,
+      compensatedEnergyKwh: bill.compensatedEnergyKWh,
       compensatedEnergyValue: bill.compensatedEnergyValue,
       publicLightingValue: bill.publicLightingValue,
+      totalValue: bill.totalValue,
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt
-    })
-    return httpBill
+    });
+    return httpBill;
   }
 }

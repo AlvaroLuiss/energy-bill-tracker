@@ -30,13 +30,16 @@ export class InMemoryBillRepository implements BillRepository {
     return bill
   }
 
-  async findByClientId(clientId: string): Promise<Bill[] | null> {
-      const bill = this.items.filter((item) => item.clientId.toString() === clientId)
+  async findManyByClientId(clientId: string): Promise<Bill[]> {
+    return this.items.filter((item) => item.clientId.toString() === clientId);
+  }
 
-      if(!bill) {
-        return null
-      }
-      return bill
+  async findByClientId(clientId: string): Promise<Bill[] | null> {
+    const bills = this.items.filter((item) => item.clientId.toString() === clientId);
+    if (!bills) {
+      return null;
+    }
+    return bills;
   }
 
   async save(bill: Bill): Promise<void> {
