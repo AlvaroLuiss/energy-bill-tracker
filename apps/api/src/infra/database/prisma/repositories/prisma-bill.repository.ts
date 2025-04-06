@@ -15,25 +15,75 @@ export class PrismaBillRepository implements BillRepository {
 
     return bills.map(PrismaBillMapper.toDomain);
   }
+
+  async findByClientId(clientId: string): Promise<Bill[]> {
+    const bills = await this.prisma.bill.findMany({
+      where: {
+        clientId,
+      },
+      select: {
+        id: true,
+        clientId: true,
+        clientNumber: true,
+        referenceMonth: true,
+        billMonth: true,
+        pdfPath: true,
+        energyConsumptionKwh: true,
+        energyConsumptionValue: true,
+        sceeEnergyKWh: true,
+        sceeEnergyValue: true,
+        compensatedEnergyKWh: true,
+        compensatedEnergyValue: true,
+        publicLightingValue: true,
+        totalValue: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    return bills.map(PrismaBillMapper.toDomain);
+  }
+
   findByMonth(billMonth: string): Promise<Bill[] | null> {
     throw new Error('Method not implemented.')
   }
-  findByClientId(clientId: string): Promise<Bill[] | null> {
-    throw new Error('Method not implemented.')
-  }
-
-  async findById(id: string): Promise<Bill | null> {    
-    const bill = await this.prisma.bill.findUnique({
+  async findManyByClientId(clientId: string): Promise<Bill[]> {
+    const bills = await this.prisma.bill.findMany({
       where: {
-        id,
+        clientId,
       },
-    })
+    });
 
+    return bills.map(PrismaBillMapper.toDomain);
+  }
+  async findById(id: string): Promise<Bill | null> {
+    const bill = await this.prisma.bill.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        clientId: true,
+        clientNumber: true,
+        referenceMonth: true,
+        billMonth: true,
+        pdfPath: true,
+        energyConsumptionKwh: true,
+        energyConsumptionValue: true,
+        sceeEnergyKWh: true,
+        sceeEnergyValue: true,
+        compensatedEnergyKWh: true,
+        compensatedEnergyValue: true,
+        publicLightingValue: true,
+        totalValue: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+  
     if (!bill) {
-      return null    
+      return null;
     }
-    
-    return PrismaBillMapper.toDomain(bill)  
+  
+    return PrismaBillMapper.toDomain(bill);
   }
 
   

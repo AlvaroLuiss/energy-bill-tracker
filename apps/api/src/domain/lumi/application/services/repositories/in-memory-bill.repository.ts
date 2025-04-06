@@ -1,5 +1,5 @@
 import { Bill } from '@/domain/lumi/enterprise/entities/bill';
-import { BillRepository } from '../../../repositories/bill.repository';
+import { BillRepository } from '../../../application/repositories/bill.repository';
 
 export class InMemoryBillRepository implements BillRepository {
   public items: Bill[] = [];
@@ -12,10 +12,14 @@ export class InMemoryBillRepository implements BillRepository {
     return this.items.find((item) => item.id.toString() === id) || null;
   }
 
-  async findByClientId(clientId: string): Promise<Bill[]> {
+  async findManyByClientId(clientId: string): Promise<Bill[]> {
     return this.items.filter((item) => item.clientId.toString() === clientId);
   }
 
+  async findByClientId(clientId: string): Promise<Bill[] | null> {
+    const bills = this.items.filter((item) => item.clientId.toString() === clientId);
+    return bills.length > 0 ? bills : null;
+  }
 
   async findAll(): Promise<Bill[]> {
     return this.items;
