@@ -5,7 +5,7 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
-  UsePipes,
+  UsePipes
 } from '@nestjs/common'
 
 import { FileInterceptor } from '@nestjs/platform-express'
@@ -15,7 +15,7 @@ import {
   ApiResponse,
   ApiTags
 } from '@nestjs/swagger'
-import { ZodValidationPipe } from 'nestjs-zod'
+import { createZodDto, ZodValidationPipe } from 'nestjs-zod'
 import { z } from 'zod'
 
 
@@ -23,15 +23,42 @@ const uploadBillSchema = z.object({
   file: z.any(),
 })
 
+const uploadBillResponseSchema = z.object({
+  
+  clientNumber: z.string(),
+  clientName: z.string(),
+  referenceMonth: z.string(),
+  energyElectric: z.object({
+    quantity: z.number(),
+    value: z.number(),
+  }),
+  energySCEEE: z.object({
+    quantity: z.number(),
+    value: z.number(),
+  }),
+  energyCompensated: z.object({
+    quantity: z.number(),
+    value: z.number(),
+  }),
+  publicLightingContribution: z.number(),
+  totalValue: z.number(),
+})
+
+
+class UploadBillResponseData extends createZodDto(
+  uploadBillResponseSchema,
+) {}
 
 @ApiTags('Bill')
 @Controller('bills')
 @UsePipes(ZodValidationPipe)
 export class UploadBillController {  
   constructor(private uploadBillService: UploadBillService) {}
+
   @Post('upload')  
+  @UseInterceptors(FileInterceptor('file'))
   @ApiBody({   
-     schema: {
+    schema: {
       type: 'object',      
       properties: {
         file: {
@@ -40,18 +67,20 @@ export class UploadBillController {
         },      
       },    
     },
-  })  @ApiResponse({
-    status: 200,    description: 'Bill uploaded successfully.',
+  })  
+  @ApiResponse({
+    status: 201,    
+    description: 'Bill uploaded successfully.',
+    type: class UploadBillResponseData extends createZodDto(
+    uploadBillResponseSchema,
+    ) {},
   })
   @ApiBadRequestResponse({    
     description: 'Validation failed. The provided file is not valid.',  
   })
-  @UseInterceptors(FileInterceptor('file'))
+  async handle(@UploadedFile() file: Express.Multer.File): Promise<UploadBillResponseData> {    
+    console.log('File:', file)
 
-  async handle(    
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<void> {    
-    console.log('Uploaded file:', file); 
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -62,13 +91,20 @@ export class UploadBillController {
 
     if (result.isLeft()) {
       const error = result.value;
-      switch (error.constructor) {
-        case BadRequestException:
-          throw error;
-
-        default:
-          throw new BadRequestException(error.message);
-      }
+      throw new BadRequestException(error.message);
     }
+
+    console.log('Result:', result.value)
+
+    return {
+      clientNumber: result.value.clientNumber,
+      clientName: result.value.clientName,
+      referenceMonth: result.value.referenceMonth,
+      energyElectric: result.value.energyElectric,
+      energySCEEE: result.value.energySCEEE,
+      energyCompensated: result.value.energyCompensated,
+      publicLightingContribution: result.value.publicLightingContribution,
+      totalValue: result.value.totalValue,
+    };
   }
 }

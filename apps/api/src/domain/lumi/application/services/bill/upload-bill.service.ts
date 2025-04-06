@@ -61,6 +61,7 @@ export class UploadBillService {
       compensatedEnergyKWh: extractedData.energyCompensated.quantity,
       compensatedEnergyValue: extractedData.energyCompensated.value,
       publicLightingValue: extractedData.publicLightingContribution,
+      totalValue: extractedData.totalValue,
     });
 
     await this.billRepository.create(bill);

@@ -18,6 +18,7 @@ export const billHttpSchema = z.object({
   compensatedEnergyKWh: z.number(),
   compensatedEnergyValue: z.number(),
   publicLightingValue: z.number(),
+  totalValue: z.number(),
   createdAt: z.date().optional().transform((val) => val?.toISOString()),
   updatedAt: z.date().optional().transform((val) => val?.toISOString()),
 })
@@ -38,6 +39,7 @@ export class PrismaBillMapper {
         compensatedEnergyKWh: raw.compensatedEnergyKWh.toNumber(),
         compensatedEnergyValue: raw.compensatedEnergyValue.toNumber(),
         publicLightingValue: raw.publicLightingValue.toNumber(),
+        totalValue: raw.totalValue.toNumber(),
         createdAt: raw.createdAt,
         updatedAt: raw.updatedAt,
       },
@@ -59,6 +61,7 @@ export class PrismaBillMapper {
       compensatedEnergyKWh: bill.compensatedEnergyKWh,
       compensatedEnergyValue: bill.compensatedEnergyValue,
       publicLightingValue: bill.publicLightingValue,
+      totalValue: bill.totalValue,
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt,
     }  

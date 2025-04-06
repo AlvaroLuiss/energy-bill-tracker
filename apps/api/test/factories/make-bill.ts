@@ -23,6 +23,7 @@ export function makeBill(
       compensatedEnergyKWh: faker.number.float({ min: 0, max: 1000}),
       compensatedEnergyValue: faker.number.float({ min: 0, max: 1000}),
       publicLightingValue: faker.number.float({ min: 0, max: 100}),
+      totalValue: faker.number.float({ min: 0, max: 1000}),
       createdAt: faker.date.past(),
       updatedAt: faker.date.recent(),
       ...override,
