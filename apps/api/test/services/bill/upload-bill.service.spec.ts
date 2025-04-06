@@ -1,5 +1,11 @@
+import { InvalidFieldError } from '@/core/errors/invalid-field-error';
+import { ResourceNotFoundError } from '@/core/errors/resource-not-found-error';
+import * as fs from 'fs';
 import * as path from 'path';
+import { ExtractedInvoiceData } from '../../../src/domain/lumi/application/pdf/pdf-parse';
 import { UploadBillService } from '../../../src/domain/lumi/application/services/bill/upload-bill.service';
+import { Bill } from '../../../src/domain/lumi/enterprise/entities/bill';
+import { Client } from '../../../src/domain/lumi/enterprise/entities/client';
 import { InMemoryBillRepository } from '../../repositories/in-memory-bill.repository';
 import { InMemoryClientRepository } from '../../repositories/in-memory-client.repository';
 
@@ -17,73 +23,54 @@ describe('UploadBillService', () => {
 
   it('should be able to upload a valid bill using a real PDF', async () => {
     const pdfPath = path.join(__dirname, '../../../src/domain/lumi/application/pdf/example.pdf');
-    const fileBuffer = require('fs').readFileSync(pdfPath);
+    const fileBuffer = fs.readFileSync(pdfPath);
+    
+    const mockExtractedData: ExtractedInvoiceData = {
+      clientNumber: '123456',
+      clientName: 'John Doe',
+      referenceMonth: '2023-05',
+      energyElectric: { quantity: 100, value: 50 },
+      energySCEEE: { quantity: 80, value: 40 },
+      energyCompensated: { quantity: 20, value: 10 },
+      publicLightingContribution: 5,
+      totalValue: 105,
+    };
+
+    jest.spyOn(sut as any, 'extractTextFromPdf').mockResolvedValue(mockExtractedData);
+    jest.spyOn(sut as any, 'generateUploadPath').mockReturnValue({ filePath: '/mock/path/file.pdf' });
+    jest.spyOn(fs.promises, 'stat').mockResolvedValue({} as fs.Stats);
+
     const result = await sut.execute({ fileBuffer });
 
     expect(result.isRight()).toBe(true);
     if (result.isRight()) {
       const extractedData = result.value;
-      expect(extractedData.clientNumber).toBeTruthy();
-      expect(extractedData.referenceMonth).toBeTruthy();
-      expect(extractedData.energyElectric).toEqual(expect.objectContaining({
-        quantity: expect.any(Number),
-        value: expect.any(Number),
-      }));
-      expect(extractedData.energySCEEE).toEqual(expect.objectContaining({
-        quantity: expect.any(Number),
-        value: expect.any(Number),
-      }));
-      expect(extractedData.energyCompensated).toEqual(expect.objectContaining({
-        quantity: expect.any(Number),
-        value: expect.any(Number),
-      }));
-      expect(extractedData.publicLightingContribution).toBeGreaterThanOrEqual(0);
+      expect(extractedData).toEqual(mockExtractedData);
+
+      expect(inMemoryClientRepository.items).toHaveLength(1);
+      expect(inMemoryClientRepository.items[0]).toBeInstanceOf(Client);
+      expect(inMemoryClientRepository.items[0].numberClient).toBe('123456');
+
+      expect(inMemoryBillRepository.items).toHaveLength(1);
+      expect(inMemoryBillRepository.items[0]).toBeInstanceOf(Bill);
+      expect(inMemoryBillRepository.items[0].clientNumber).toBe('123456');
     }
   });
 
-  // it('should not be able to upload a bill if the file does not exist', async () => {
-  //   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should return left with InvalidFieldError if fileBuffer is empty', async () => {
+    const result = await sut.execute({ fileBuffer: Buffer.from('') });
 
-  //   const fileBuffer = Buffer.from(''); // Simulate an empty or invalid file buffer
-  //   const result = await sut.execute({ fileBuffer });
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(InvalidFieldError);
+  });
 
-  //   expect(result.isLeft()).toBe(true);
-  //   expect(result.value).toBeInstanceOf(ResourceNotFoundError);
+  it('should return left with ResourceNotFoundError if PDF extraction fails', async () => {
+    const fileBuffer = Buffer.from('mock pdf content');
+    jest.spyOn(sut as any, 'extractTextFromPdf').mockResolvedValue(null);
 
-  //   consoleErrorSpy.mockRestore();
-  // });
+    const result = await sut.execute({ fileBuffer });
 
-  // it('should not be able to upload a bill if the file is not a PDF', async () => {
-  //   const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-  //   const fileBuffer = Buffer.from('Invalid file content'); // Simulate invalid file content
-  //   const result = await sut.execute({ fileBuffer });
-
-  //   expect(result.isLeft()).toBe(true);
-  //   expect(result.value).toBeInstanceOf(InvalidFieldError);
-
-  //   consoleErrorSpy.mockRestore();
-  // });
-
-  // it('should create a new client if it does not exist', async () => {
-  //   const pdfPath = path.join(__dirname, '../../../src/domain/lumi/application/pdf/example.pdf');
-  //   const clientNumber = '7204076116';
-
-  //   // Ensure the client does not exist before the test
-  //   expect(await inMemoryClientRepository.findByClientNumber(clientNumber)).toBeNull();
-
-  //   const fileBuffer = require('fs').readFileSync(pdfPath);
-  //   const result = await sut.execute({ fileBuffer });
-
-  //   expect(result.isRight()).toBe(true);
-  //   if (result.isRight()) {
-  //     const extractedData = result.value;
-  //     expect(extractedData.clientNumber).toBe(clientNumber);
-
-  //     // Check if the client was created
-  //     const createdClient = await inMemoryClientRepository.findByClientNumber(clientNumber);
-  //     expect(createdClient).not.toBeNull();
-  //     expect(createdClient?.numberClient).toBe(clientNumber);
-  //   }
-  // });
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(ResourceNotFoundError);
+  });
 });
