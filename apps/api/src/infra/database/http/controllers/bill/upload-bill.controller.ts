@@ -79,7 +79,6 @@ export class UploadBillController {
     description: 'Validation failed. The provided file is not valid.',  
   })
   async handle(@UploadedFile() file: Express.Multer.File): Promise<UploadBillResponseData> {    
-    console.log('File:', file)
 
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -93,8 +92,6 @@ export class UploadBillController {
       const error = result.value;
       throw new BadRequestException(error.message);
     }
-
-    console.log('Result:', result.value)
 
     return {
       clientNumber: result.value.clientNumber,

@@ -76,7 +76,6 @@ describe('Download Bill (E2E)', () => {
         }
       }
     } catch (error) {
-      console.error('Error cleaning up test directories:', error);
     }
 
     await app.close();

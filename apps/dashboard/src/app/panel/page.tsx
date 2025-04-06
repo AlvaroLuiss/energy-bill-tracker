@@ -3,8 +3,8 @@
 import { BillLoadingCard } from '@/components/panel/BillLoadingCard';
 import { useFetchClients } from '@/hooks/useFetchClients';
 import { Dialog } from '@headlessui/react';
-import { Download, FileText, X } from 'lucide-react';
-import { useState } from 'react';
+import { Download, FileText, Search, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface Bill {
@@ -24,10 +24,19 @@ export default function ClientsPage() {
   const { clients, isLoading, error } = useFetchClients();
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [searchNumber, setSearchNumber] = useState('');
+
+  const filteredClients = useMemo(() => {
+    return clients.filter(client => {
+      const nameMatch = client.name.toLowerCase().includes(searchName.toLowerCase());
+      const numberMatch = client.numberClient.includes(searchNumber);
+      return nameMatch && numberMatch;
+    });
+  }, [clients, searchName, searchNumber]);
 
   const downloadBill = async (billId: string) => {
     try {
-      console.log(`Iniciando download da bill ${billId}`);
       const response = await fetch(`http://localhost:3000/bills/${billId}/download`, {
         method: 'GET',
         credentials: 'include',
@@ -55,9 +64,6 @@ export default function ClientsPage() {
         throw new Error('PDF vazio ou inválido');
       }
 
-      console.log(`PDF recebido com tamanho: ${blob.size} bytes`);
-
-  
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -72,7 +78,6 @@ export default function ClientsPage() {
 
       toast.success('Download iniciado com sucesso!');
     } catch (error) {
-      console.error('Erro detalhado:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao baixar a fatura. Tente novamente.';
       toast.error(errorMessage, {
         duration: 3000,
@@ -102,13 +107,31 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">
             Painel de Clientes
           </h1>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
-              Consumidores
-            </button>
-            <button className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
-              Distribuidoras
-            </button>
+        </div>
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar por nome..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar por número..."
+                value={searchNumber}
+                onChange={(e) => setSearchNumber(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </div>
           </div>
         </div>
 
@@ -145,43 +168,51 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {client.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {client.numberClient}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      CEMIG
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {client.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
-                      <div className="max-h-20 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
-                        <div className="flex gap-2">
-                          {client.bills.map((bill) => (
-                            <div
-                              key={bill.id}
-                              className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors cursor-pointer"
-                              onClick={() => {
-                                setSelectedBill(bill);
-                                setIsModalOpen(true);
-                              }}
-                            >
-                              <FileText size={16} className="text-green-700" />
-                              <span className="text-xs font-medium text-green-800">
-                                {bill.billMonth}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                {filteredClients.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                      Nenhum resultado encontrado
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredClients.map((client) => (
+                    <tr key={client.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {client.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {client.numberClient}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        CEMIG
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {client.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                        <div className="max-h-20 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
+                          <div className="flex gap-2">
+                            {client.bills.map((bill) => (
+                              <div
+                                key={bill.id}
+                                className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  setSelectedBill(bill);
+                                  setIsModalOpen(true);
+                                }}
+                              >
+                                <FileText size={16} className="text-green-700" />
+                                <span className="text-xs font-medium text-green-800">
+                                  {bill.billMonth}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

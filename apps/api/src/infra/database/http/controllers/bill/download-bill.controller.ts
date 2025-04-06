@@ -25,7 +25,6 @@ export class DownloadBillController {
     description: 'PDF file not found.',
   })
   async download(@Param('id') id: string, @Res() res: Response) {
-    console.log(`Iniciando download da bill ${id}`);
     
     try {
       const result = await this.downloadBillService.execute({
@@ -33,7 +32,6 @@ export class DownloadBillController {
       });
 
       if (result.isLeft()) {
-        console.log('Download service retornou erro');
         return res.status(404).json({ 
           message: 'PDF não encontrado',
           error: 'NOT_FOUND'
@@ -41,10 +39,8 @@ export class DownloadBillController {
       }
 
       const { filePath, fileName } = result.value;
-      console.log(`Preparando download do arquivo: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
-        console.error(`Arquivo não existe fisicamente: ${filePath}`);
         return res.status(404).json({ 
           message: 'Arquivo PDF não encontrado no servidor',
           error: 'FILE_NOT_FOUND'
@@ -56,7 +52,6 @@ export class DownloadBillController {
       
       try {
         const fileStats = fs.statSync(filePath);
-        console.log(`Tamanho do arquivo: ${fileStats.size} bytes`);
         
         if (fileStats.size === 0) {
           return res.status(404).json({ 
@@ -65,7 +60,6 @@ export class DownloadBillController {
           });
         }
       } catch (error) {
-        console.error('Erro ao ler estatísticas do arquivo:', error);
         return res.status(500).json({ 
           message: 'Erro ao ler arquivo',
           error: 'FILE_READ_ERROR'
@@ -74,16 +68,13 @@ export class DownloadBillController {
 
       return res.sendFile(filePath, (err) => {
         if (err) {
-          console.error('Erro ao enviar arquivo:', err);
           return res.status(500).json({ 
             message: 'Erro ao enviar arquivo',
             error: 'SEND_FILE_ERROR'
           });
         }
-        console.log('Arquivo enviado com sucesso');
       });
     } catch (error) {
-      console.error('Erro ao processar download:', error);
       return res.status(500).json({ 
         message: 'Erro interno ao processar o download',
         error: 'INTERNAL_ERROR'

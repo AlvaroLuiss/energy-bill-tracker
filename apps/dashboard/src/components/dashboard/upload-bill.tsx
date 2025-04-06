@@ -100,7 +100,6 @@ export function UploadBill() {
         icon: '✅',
       });
     } catch (err) {
-      console.error('Erro detalhado:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer upload';
       toast.error(errorMessage, {
         duration: 3000,
