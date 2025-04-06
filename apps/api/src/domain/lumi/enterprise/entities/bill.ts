@@ -23,6 +23,8 @@ export interface BillProps {
 
   publicLightingValue: number;
 
+  totalValue: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -47,6 +49,10 @@ export class Bill extends Entity<BillProps> {
 
   get pdfPath() {
     return this.props.pdfPath;
+  }
+
+  get totalValue() {
+    return this.props.totalValue;
   }
 
   get energyConsumptionKwh() {
