@@ -30,7 +30,6 @@ describe('Get Client (E2E)', () => {
     const response = await request(app.getHttpServer())      
     .get('/clients');
 
-    console.dir(response.body, { depth: null });
     
     expect(response.status).toBe(200);
     expect(response.body).toEqual({

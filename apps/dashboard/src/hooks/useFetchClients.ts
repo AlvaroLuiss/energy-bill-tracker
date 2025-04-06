@@ -61,7 +61,6 @@ export const useFetchClients = (): UseFetchClientsReturn => {
       setClients(data.clients);
       setError(null);
     } catch (error) {
-      console.error('Erro ao buscar dados:', error);
       setError('Não foi possível carregar os dados. Por favor, tente novamente mais tarde.');
     } finally {
       setIsLoading(false);

@@ -15,9 +15,7 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<ExtractedInvoi
   try {
     const pdfData = await pdfParse(fileBuffer);
     const text = pdfData.text;
-    
-    console.log('Extracted PDF Text:', text);
-    
+        
     // Extração de número do cliente
     let clientNumber = '0';
     const clientNumberRegex1 = /Nº DO CLIENTE\s*(\d+)/i;
@@ -161,11 +159,9 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<ExtractedInvoi
       totalValue
     };
     
-    console.log('Extracted Data:', extractedData);
     
     return extractedData;
   } catch (error) {
-    console.error('Error parsing PDF:', error);
     throw new Error(`Failed to parse PDF: ${error.message}`);
   }
 }

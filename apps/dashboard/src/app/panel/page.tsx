@@ -1,9 +1,10 @@
 'use client';
 
 import { BillLoadingCard } from '@/components/panel/BillLoadingCard';
+import { Input } from '@/components/ui/input';
 import { useFetchClients } from '@/hooks/useFetchClients';
 import { Dialog } from '@headlessui/react';
-import { Download, FileText, X } from 'lucide-react';
+import { Download, FileText, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -24,10 +25,18 @@ export default function ClientsPage() {
   const { clients, isLoading, error } = useFetchClients();
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [nameFilter, setNameFilter] = useState('');
+  const [numberFilter, setNumberFilter] = useState('');
+
+  // Filter clients based on search inputs
+  const filteredClients = clients?.filter(client => {
+    const nameMatch = client.name.toLowerCase().includes(nameFilter.toLowerCase());
+    const numberMatch = client.numberClient.includes(numberFilter);
+    return nameMatch && numberMatch;
+  });
 
   const downloadBill = async (billId: string) => {
     try {
-      console.log(`Iniciando download da bill ${billId}`);
       const response = await fetch(`http://localhost:3000/bills/${billId}/download`, {
         method: 'GET',
         credentials: 'include',
@@ -55,7 +64,6 @@ export default function ClientsPage() {
         throw new Error('PDF vazio ou inválido');
       }
 
-      console.log(`PDF recebido com tamanho: ${blob.size} bytes`);
 
   
       const url = window.URL.createObjectURL(blob);
@@ -72,7 +80,6 @@ export default function ClientsPage() {
 
       toast.success('Download iniciado com sucesso!');
     } catch (error) {
-      console.error('Erro detalhado:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro ao baixar a fatura. Tente novamente.';
       toast.error(errorMessage, {
         duration: 3000,
@@ -98,17 +105,30 @@ export default function ClientsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Painel de Clientes
-          </h1>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
-              Consumidores
-            </button>
-            <button className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800">
-              Distribuidoras
-            </button>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+          Painel de Clientes
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Buscar por nome..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          </div>
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Buscar por número..."
+              value={numberFilter}
+              onChange={(e) => setNumberFilter(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           </div>
         </div>
 
@@ -145,7 +165,7 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {clients.map((client) => (
+                {filteredClients?.map((client) => (
                   <tr key={client.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {client.name}

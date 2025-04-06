@@ -33,13 +33,11 @@ export class UploadBillService {
 
   private ensureUploadsDirectory() {
     if (!fs.existsSync(this.uploadsDir)) {
-      console.log(`Criando diretório de uploads: ${this.uploadsDir}`);
       fs.mkdirSync(this.uploadsDir, { recursive: true });
     }
   }
 
   private generateUploadPath(clientNumber: string): { fileName: string; filePath: string } {
-    // Cria um subdiretório para o ano e mês atual
     const now = new Date();
     const yearMonth = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
     const yearMonthPath = path.join(this.uploadsDir, yearMonth);
@@ -48,7 +46,6 @@ export class UploadBillService {
       fs.mkdirSync(yearMonthPath, { recursive: true });
     }
 
-    // Gera um nome de arquivo único com o número do cliente
     const fileName = `${clientNumber}-${Date.now()}.pdf`;
     const filePath = path.join(yearMonthPath, fileName);
 
@@ -68,18 +65,12 @@ export class UploadBillService {
     }
 
     try {
-      // Gera o caminho do arquivo
       const { filePath } = this.generateUploadPath(extractedData.clientNumber);
 
-      // Salva o arquivo
-      console.log(`Salvando arquivo em: ${filePath}`);
       await fs.promises.writeFile(filePath, fileBuffer);
 
-      // Verifica se o arquivo foi salvo corretamente
       const fileStats = await fs.promises.stat(filePath);
-      console.log(`Arquivo salvo com tamanho: ${fileStats.size} bytes`);
 
-      // Processa o cliente
       let client = await this.clientRepository.findByClientNumber(extractedData.clientNumber);
       if (!client) {
         client = Client.create({
@@ -92,13 +83,12 @@ export class UploadBillService {
         await this.clientRepository.create(client);
       }
 
-      // Cria a bill com o caminho do arquivo
       const bill = Bill.create({
         clientId: client.id,
         clientNumber: extractedData.clientNumber,
         referenceMonth: new Date(extractedData.referenceMonth),
         billMonth: extractedData.referenceMonth,
-        pdfPath: filePath, // Caminho absoluto do arquivo
+        pdfPath: filePath, 
         energyConsumptionKwh: extractedData.energyElectric.quantity,
         energyConsumptionValue: extractedData.energyElectric.value,
         sceeEnergyKWh: extractedData.energySCEEE.quantity,
@@ -113,7 +103,6 @@ export class UploadBillService {
 
       return right(extractedData);
     } catch (error) {
-      console.error('Erro ao processar upload:', error);
       return left(new ResourceNotFoundError());
     }
   }
@@ -122,7 +111,6 @@ export class UploadBillService {
     try {
       return await extractPdfText(fileBuffer);
     } catch (err) {
-      console.error('Error extracting text from PDF:', err);
       return null;
     }
   }
