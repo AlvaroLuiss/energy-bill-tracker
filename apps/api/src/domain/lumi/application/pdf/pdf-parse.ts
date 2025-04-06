@@ -120,39 +120,34 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<ExtractedInvoi
     }
     
     // Extração de energia elétrica
-    const energyElectricRegex = /Energia Elétrica[\s\n]*kWh[\s\n]*(\d+)[\s\n]*([\d,.]+)[\s\n]*([\d,.]+)/i;
+    const energyElectricRegex = /Energia Elétrica[\s\n]*kWh[\s\n]*(\d+(?:\.\d{3})?)[\s\n]+([\d,]+)[\s\n]+([\d,]+)/i;
     const energyElectricMatch = text.match(energyElectricRegex);
     const energyElectric = {
       quantity: energyElectricMatch ? parseNumber(energyElectricMatch[1]) : 0,
       value: energyElectricMatch ? parseNumber(energyElectricMatch[3]) : 0,
     };
     
-
     // Extração de energia SCEEE
-    const energySCEEERegex = /Energia SCEE s\/[\s\n]*ICMS[\s\n]*kWh[\s\n]*(\d+)[\s\n]*([\d,.]+)[\s\n]*([\d,.]+)/i;
+    const energySCEEERegex = /Energia SCEE s\/[\s\n]*ICMS[\s\n]*kWh[\s\n]*(\d+(?:\.\d+)?)[\s\n]*(\d+(?:[,\.]\d+)?)[\s\n]*(\d+(?:[,\.]\d+)?)/i;    
     const energySCEEEMatch = text.match(energySCEEERegex);
     const energySCEEE = {
       quantity: energySCEEEMatch ? parseNumber(energySCEEEMatch[1]) : 0,
       value: energySCEEEMatch ? parseNumber(energySCEEEMatch[3]) : 0,
     };
     
-
     // Extração de energia compensada
-    const energyCompensatedRegex = /Energia compensada GD I[\s\n]*kWh[\s\n]*(\d+)[\s\n]*([\d,.]+)[\s\n]*(-?[\d,.]+)/i;
-    const energyCompensatedMatch = text.match(energyCompensatedRegex);
+    const energyCompensatedRegex = /Energia compensada GD I[\s\n]*kWh[\s\n]*(\d[\d\.\s]+)[\s\n]+([\d,\.]+)[\s\n]+(-?[\d,\.]+)/i;    const energyCompensatedMatch = text.match(energyCompensatedRegex);
     const energyCompensated = {
       quantity: energyCompensatedMatch ? parseNumber(energyCompensatedMatch[1]) : 0,
       value: energyCompensatedMatch ? parseNumber(energyCompensatedMatch[3]) : 0,
     };
     
-
     // Extração de contribuição de iluminação pública
-    const publicLightingRegex = /Contrib Ilum Publica Municipal[\s\n]*([\d,.]+)/i;
+    const publicLightingRegex = /Contrib Ilum Publica Municipal[\s\n]*([\d\s,.]+)/i;
     const publicLightingContribution = parseNumber(extractValue(text, publicLightingRegex));
     
-
     // Extração do valor total
-    const totalValueRegex = /TOTAL[\s\n]*([\d,.]+)/i;
+    const totalValueRegex = /TOTAL[\s\n]*([\d\s,.]+)/i;
     const totalValue = parseNumber(extractValue(text, totalValueRegex));
     
     const extractedData: ExtractedInvoiceData = {
@@ -182,5 +177,35 @@ function extractValue(text: string, regex: RegExp): string {
 
 function parseNumber(value: string): number {
   if (!value) return 0;
-  return parseFloat(value.replace(',', '.')) || 0;
+  
+  // Remove all spaces first
+  let normalizedValue = value.trim().replace(/\s/g, '');
+  
+  // For Brazilian/European format where periods are thousand separators 
+  // and commas are decimal points (e.g., "2.300,00")
+  if (normalizedValue.includes('.') && normalizedValue.includes(',')) {
+    // If both period and comma exist, and period comes before comma,
+    // assume period is thousand separator
+    if (normalizedValue.indexOf('.') < normalizedValue.indexOf(',')) {
+      normalizedValue = normalizedValue.replace(/\./g, '').replace(',', '.');
+    }
+  } 
+  // If only period exists and it's clearly a thousand separator (e.g., "2.300")
+  else if (normalizedValue.includes('.') && !normalizedValue.includes(',')) {
+    // Check if the period is likely a thousand separator 
+    // (usually has 3 digits following it)
+    const parts = normalizedValue.split('.');
+    if (parts.length > 1 && parts[parts.length - 1].length === 3) {
+      normalizedValue = normalizedValue.replace(/\./g, '');
+    }
+  }
+  // If only comma exists, treat it as decimal separator
+  else if (normalizedValue.includes(',') && !normalizedValue.includes('.')) {
+    normalizedValue = normalizedValue.replace(',', '.');
+  }
+  
+  // Handle any remaining non-numeric characters (except decimal point)
+  normalizedValue = normalizedValue.replace(/[^\d.-]/g, '');
+  
+  return parseFloat(normalizedValue) || 0;
 }
