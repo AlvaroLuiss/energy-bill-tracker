@@ -38,7 +38,6 @@ export class UploadBillService {
   }
 
   private generateUploadPath(clientNumber: string): { fileName: string; filePath: string } {
-    // Cria um subdiretório para o ano e mês atual
     const now = new Date();
     const yearMonth = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
     const yearMonthPath = path.join(this.uploadsDir, yearMonth);
@@ -47,7 +46,6 @@ export class UploadBillService {
       fs.mkdirSync(yearMonthPath, { recursive: true });
     }
 
-    // Gera um nome de arquivo único com o número do cliente
     const fileName = `${clientNumber}-${Date.now()}.pdf`;
     const filePath = path.join(yearMonthPath, fileName);
 
