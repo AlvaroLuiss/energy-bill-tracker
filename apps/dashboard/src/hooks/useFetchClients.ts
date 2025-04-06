@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Bill {
   id: string;
@@ -46,8 +46,10 @@ export const useFetchClients = (): UseFetchClientsReturn => {
       setIsLoading(true);
       const response = await fetch('http://localhost:3000/clients', {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         }
       });
 

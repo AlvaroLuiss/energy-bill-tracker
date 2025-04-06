@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -58,18 +59,13 @@ export function UploadBill() {
     return new Intl.NumberFormat('pt-BR').format(value);
   };
 
-  const handleUpload = useCallback(async () => {
-    if (!file) {
-      setError('Nenhum arquivo selecionado');
-      return;
-    }
-  
-    setIsUploading(true);
-    setError(null);
-  
+  const handleUpload = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
       const response = await fetch('http://localhost:3000/bills/upload', {
         method: 'POST',
@@ -79,11 +75,17 @@ export function UploadBill() {
           'Accept': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Erro ao fazer upload');
+        } else {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
       }
-  
+
       const data = await response.json();
       setUploadedData(data);
       setFile(null);
@@ -99,16 +101,14 @@ export function UploadBill() {
       });
     } catch (err) {
       console.error('Erro detalhado:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao fazer upload');
-      toast.error('Erro ao registrar a fatura', {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer upload';
+      toast.error(errorMessage, {
         duration: 3000,
         position: 'top-center',
         icon: '❌',
       });
-    } finally {
-      setIsUploading(false);
     }
-  }, [file]);
+  };
 
   const energyData = useMemo(() => {
     if (!uploadedData) return [];
@@ -159,7 +159,7 @@ export function UploadBill() {
         <Button
           onClick={handleUpload}
           disabled={!file || isUploading}
-          className="mt-4 bg-green-600 hover:bg-green-700"
+          className="mt-4 bg-green-600 hover:bg-green-700 cursor-pointer"
         >
           {isUploading ? 'Enviando...' : 'Enviar PDF'}
         </Button>
